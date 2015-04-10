@@ -231,22 +231,7 @@ function Set-TestAgentConfiguration
 
         return 0
     }
-	# Todo<Bug 227810>. This restart should not be required if DSC doesnt throw a requirement of restart at every step.
-	elseif ($configOut.ExitCode -eq 0) 
-    {
-		if(-not (IsDtaExecutionHostRunning))
-		{
-			Write-Verbose -Message "Marking the machine for reboot as exit code 0 received and TestAgent is not running" -Verbose
-			SetRebootKey;
-		}
-		# In On Prem scenarios exit code is always 0, because agent is configured as logged in user. But because DSC launches the process as non interactive process
-		# we need a restart.
-		elseif ($configAsProcess -and [string]::IsNullOrWhiteSpace($AlternateCredUserName))
-		{
-			Write-Verbose -Message "Restarting the machine as error code 0 received and agent is launched as non interactive prcoess." -verbose
-			SetRebootKey;
-		}
-    }
+
     return $configOut.ExitCode
 }
 
