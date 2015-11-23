@@ -23,14 +23,14 @@ function CreateCommandLineArgs
           [ValidateNotNullOrEmpty()][string]$projectName,
           [ValidateNotNullOrEmpty()][string]$projectVersion,
           [string]$serverUrl,
-	      [string]$serverUsername,
-		  [string]$serverPassword,
-		  [string]$dbUrl,
-		  [string]$dbUsername,
-		  [string]$dbPassword,
+          [string]$serverUsername,
+          [string]$serverPassword,
+          [string]$dbUrl,
+          [string]$dbUsername,
+          [string]$dbPassword,
           [string]$additionalArguments,
           [string]$configFile)
-	
+    
 
     $sb = New-Object -TypeName "System.Text.StringBuilder"; 
 
@@ -38,43 +38,43 @@ function CreateCommandLineArgs
     # To avoid this, ignore the Append return value using [void]
     [void]$sb.Append("begin");
 
-    [void]$sb.Append(" /k:""$projectKey"" /n:""$projectName"" /v:""$projectVersion""");
+    [void]$sb.Append(" /k:" + (EscapeArg($projectKey)) + " /n:" + (EscapeArg($projectName)) + " /v:" + (EscapeArg($projectVersion)));
 
     if ([String]::IsNullOrWhiteSpace($serverUrl))
     {   
-		throw "Please setup a generic endpoint and specify the SonarQube Url as the Server Url" 
-	}
+        throw "Please setup a generic endpoint and specify the SonarQube Url as the Server Url" 
+    }
 
-	[void]$sb.Append(" /d:sonar.host.url=""$serverUrl""")
+    [void]$sb.Append(" /d:sonar.host.url=" + (EscapeArg($serverUrl)))
 
     if (![String]::IsNullOrWhiteSpace($serverUsername))
     {
-        [void]$sb.Append(" /d:sonar.login=""$serverUsername""")
+        [void]$sb.Append(" /d:sonar.login=" + (EscapeArg($serverUsername)))
     }
 
     if (![String]::IsNullOrWhiteSpace($serverPassword))
     {
-        [void]$sb.Append(" /d:sonar.password=""$serverPassword""")
+        [void]$sb.Append(" /d:sonar.password=" + (EscapeArg($serverPassword)))
     }
 
     if (![String]::IsNullOrWhiteSpace($dbUrl))
     {
-        [void]$sb.Append(" /d:sonar.jdbc.url=""$dbUrl""")
+        [void]$sb.Append(" /d:sonar.jdbc.url=" + (EscapeArg($dbUrl)))
     }
 
     if (![String]::IsNullOrWhiteSpace($dbUsername))
     {
-        [void]$sb.Append(" /d:sonar.jdbc.username=""$dbUsername""")
+        [void]$sb.Append(" /d:sonar.jdbc.username=" + (EscapeArg($dbUsername)))
     }
 
     if (![String]::IsNullOrWhiteSpace($dbPassword))
     {
-        [void]$sb.Append(" /d:sonar.jdbc.password=""$dbPassword""")
+        [void]$sb.Append(" /d:sonar.jdbc.password=" + (EscapeArg($dbPassword)))
     }
 
     if (![String]::IsNullOrWhiteSpace($additionalArguments))
     {
-        [void]$sb.Append(" " + $additionalArguments)
+        [void]$sb.Append(" " + $additionalArguments) # the user should take care of escaping the extra settings
     }
 
     if (IsFilePathSpecified $configFile)
@@ -84,7 +84,7 @@ function CreateCommandLineArgs
             throw "Could not find the specified configuration file: $configFile" 
         }
 
-        [void]$sb.Append(" /s:$configFile")
+        [void]$sb.Append(" /s:" + (EscapeArg($configFileParam)))
     }
 
     return $sb.ToString();
@@ -159,8 +159,19 @@ function GetEndpointData
 
 ################# Helpers ######################
 
+# When passing arguments to a process, the quotes need to be doubled and 
+# the entire string needs to be placed inside quotes to avoid issues with spaces
+function EscapeArg
+{
+    param([string]$argVal)
+
+    $argVal = $argVal.Replace('"', '""');
+    $argVal = '"' + $argVal + '"';
+
+    return $argVal;
+}
+
 # Set a variable in a property bag that is accessible by all steps
-# To retrieve the variable use $val = Get-Variable $distributedTaskContext "varName"
 function SetTaskContextVariable
 {
     param([string][ValidateNotNullOrEmpty()]$varName, 
@@ -169,6 +180,8 @@ function SetTaskContextVariable
     Write-Host "##vso[task.setvariable variable=$varName;]$varValue"
 }
 
+
+# Retrieve a variable from the property bag accesible to all steps
 function GetTaskContextVariable()
 {
 	param([string][ValidateNotNullOrEmpty()]$varName)
