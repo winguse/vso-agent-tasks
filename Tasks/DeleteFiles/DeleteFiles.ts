@@ -6,7 +6,7 @@ import path = require('path');
 import fs = require('fs');
 import os = require('os');
 import Q = require('q');
-var tl = require("vso-task-lib");
+var tl = require('vso-task-lib');
 
 // contents is a multiline input containing glob patterns
 var contents: string[] = tl.getDelimitedInput('Contents', '\n');
@@ -25,15 +25,21 @@ for (var i = 0; i < contents.length; i++) {
     includeContents.push(realPattern);        
 }
 
-// enumerate all files    
+// enumerate all files
 var files = [];
 var allPaths = tl.find(sourceFolder);
+tl.debug('allPaths: ' + allPaths);
+if (allPaths.length === 0) {
+    tl.debug('source folder not found. nothing to delete.');
+}
+
 var allFiles: string[] = [];
 var allFolders: string[] = [];
 
 // folders should be deleted last
 for (var i = 0; i < allPaths.length; i++) {
-    if (!fs.statSync(allPaths[i]).isDirectory()) {
+    tl.debug("checking for directory: " + allPaths[i]);
+    if (!tl.stats(allPaths[i]).isDirectory()) {
         allFiles.push(allPaths[i]);
     }
     else {
@@ -54,7 +60,7 @@ if (includeContents && allFiles && includeContents.length > 0 && allFiles.length
     // apply include filter
     for (var i = 0; i < includeContents.length; i++) {
         var pattern: string = includeContents[i];
-        tl.debug('Include matching ' + pattern);
+        tl.debug('Include matching: ' + pattern);
         // let minimatch do the actual filtering
         var matches = tl.match(allFiles, pattern, matchOptions);
         tl.debug('Include matched ' + matches.length + ' files');
@@ -75,6 +81,7 @@ else {
 var errorHappened: boolean = false;
 for (var i: number = 0; i < files.length; i++){
     try {
+        tl.debug("trying to delete: " + files[i]);
         tl.rmRF(files[i]);
     }
     catch (err) {
@@ -84,5 +91,5 @@ for (var i: number = 0; i < files.length; i++){
 }
 
 if (errorHappened) {
-    tl.exit(1);
+    tl.setResult(1, "Couldn't delete one or more files", true);
 }

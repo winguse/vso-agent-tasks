@@ -6,7 +6,7 @@ import path = require('path');
 import fs = require('fs');
 import os = require('os');
 import Q = require('q');
-var tl = require("vso-task-lib");
+var tl = require('vso-task-lib');
 
 function getCommonLocalPath(files: string[]): string {
     if (!files || files.length === 0) {

@@ -4,7 +4,7 @@
 var path = require('path');
 var fs = require('fs');
 var os = require('os');
-var tl = require("vso-task-lib");
+var tl = require('vso-task-lib');
 function getCommonLocalPath(files) {
     if (!files || files.length === 0) {
         return "";
